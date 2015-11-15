@@ -1,0 +1,33 @@
+{% assign class_name = currentClass.friendlyName | camel_case | capitalize %}
+    {{ class_name }}:set{ {%
+for prop in currentClass.systemProperties %}{%
+  assign prop_name = prop.name | downcase | underscore_spaces %}{%
+  assign getter = prop.type %}{%
+  assign setter = prop.type %}{%
+  if prop.type == 'string array' %}{%
+    assign getter = 'set' %}{%
+  elsif prop.type == 'string selector' %}{%
+    assign getter = 'from_set' %}{%
+    assign setter = 'string' %}{%
+  endif %}
+        {{ prop_name }} = { {%
+  for line in prop.description %}{%
+      if line %}
+            -- {{ line }}{%
+      else %}
+{%    endif %}{%
+  endfor %}{%
+  if prop.readAccess %}
+            get = function(self) return self:_get_attr_{{ getter }}('{{ prop.systemName }}') end,{%
+  else %}
+            get = function(self) return '{{ prop.systemName }}:write:only' end,{%
+  endif %}{%
+  if prop.writeAccess %}
+            set = function(self, value) return self:_set_attr_{{ setter }}('{{ prop.systemName }}', value) end{%
+  else %}
+            set = function(self, value) return '{{ prop.systemName }}:read:only' end{%
+endif%}{% unless forloop.last %}{%
+endunless %}
+        },{%
+endfor %}
+    }

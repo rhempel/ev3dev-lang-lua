@@ -1,0 +1,42 @@
+{%
+assign class_name = currentClass.friendlyName | camel_case | capitalize %}{%
+if currentClass.systemDeviceNameConvention %}{%
+    assign device_name_convention = currentClass.systemDeviceNameConvention | replace: '\{\d\}', '*' %}{%
+else %}{%
+    assign device_name_convention = '*' %}{%
+endif %}{%
+if currentClass.inheritance %}{%
+    assign base_class = currentClass.inheritance | camel_case | capitalize %}{%
+else %}{%
+    assign base_class = 'Device' %}{%
+endif%}{%
+assign driver_name = "" %}{%
+if currentClass.driverName %}{%
+    for name in currentClass.driverName %}{%
+        capture driver_name %}{{ driver_name }}, '{{name}}'{% endcapture %}{%
+    endfor %}{%
+    capture driver_name %} driver_name=[{{ driver_name | remove_first:', ' }}],{% endcapture %}{%
+endif %}
+{{ class_name }} = Device:extend()
+    {%
+for line in currentClass.description %}{%
+    if line %}
+    -- {{ line }}{%
+    else %}
+{%  endif %}{%
+endfor %}
+{% if currentClass.inheritance %}
+    {{ class_name }}.SYSTEM_CLASS_NAME = {{ base_class }}.SYSTEM_CLASS_NAME
+    {{ class_name }}.SYSTEM_DEVICE_NAME_CONVENTION = {{ base_class }}.SYSTEM_DEVICE_NAME_CONVENTION
+{% else %}
+    {{ class_name }}.SYSTEM_CLASS_NAME = '{{ currentClass.systemClassName }}'
+    {{ class_name }}.SYSTEM_DEVICE_NAME_CONVENTION = '{{ device_name_convention }}'
+{% endif %}
+    function {{ class_name }}:init(port, name, args)
+        name = name or {{ class_name }}.SYSTEM_DEVICE_NAME_CONVENTION
+        args = args or {}
+
+        args['port_name'] = port
+
+        Device.init(self, {{ class_name }}.SYSTEM_CLASS_NAME, name, args)
+    end

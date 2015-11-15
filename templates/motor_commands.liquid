@@ -1,0 +1,19 @@
+{% assign class_name = currentClass.friendlyName | camel_case | capitalize %}{%
+for propval in currentClass.propertyValues %}{%
+    if propval.propertyName == "Command" %}{%
+        for value in propval.values %}{%
+            assign cmd = value.name | replace:'-','_' %}
+    function {{ class_name }}:{{ cmd }}(args){%
+        for line in value.description %}
+        -- {{line}}{%
+        endfor %}
+        args = args or {}
+        for k,v in pairs(args) do
+            self[k] = v
+        end
+        self.command = '{{ value.name }}'
+    end
+{%
+        endfor %}{%
+    endif %}{%
+endfor %}
